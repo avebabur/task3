@@ -1,54 +1,55 @@
-/*!
-    * Licensed under MIT (https://github.com/StartBootstrap/startbootstrap-agency/blob/master/LICENSE)
-    */
-    (function ($) {
-    "use strict"; // Start of use strict
+var layers = document.querySelectorAll('[data-speed]');
+var nav = document.getElementById('mainNav');
 
-    // Smooth scrolling using jQuery easing
-    $('a.js-scroll-trigger[href*="#"]:not([href="#"])').click(function () {
-        if (
-            location.pathname.replace(/^\//, "") ==
-                this.pathname.replace(/^\//, "") &&
-            location.hostname == this.hostname
-        ) {
-            var target = $(this.hash);
-            target = target.length
-                ? target
-                : $("[name=" + this.hash.slice(1) + "]");
-            if (target.length) {
-                $("html, body").animate(
-                    {
-                        scrollTop: target.offset().top - 72,
-                    },
-                    1000,
-                    "easeInOutExpo"
-                );
-                return false;
-            }
-        }
+function onScroll() {
+  layers.forEach(function (layer) {
+    // distance between the middle of the section and the middle of the screen
+    var box = layer.parentElement.getBoundingClientRect();
+    var offset = box.top + box.height / 2 - window.innerHeight / 2;
+
+    layer.style.translate = '0 ' + offset * layer.dataset.speed + 'px';
+  });
+
+  // dark background for the navbar after the first screen
+  nav.classList.toggle('scrolled', window.scrollY > 80);
+}
+
+window.addEventListener('scroll', onScroll);
+onScroll();
+
+// close the phone menu after clicking a link
+$('.nav-link').click(function () {
+  $('.navbar-collapse').collapse('hide');
+});
+
+// draw the opening positions from their FEN (only the piece part)
+var glyphs = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
+
+document.querySelectorAll('.mini-board').forEach(function (board) {
+  var squares = [];
+
+  board.dataset.fen.split('/').forEach(function (rank) {
+    rank.split('').forEach(function (ch) {
+      if (ch >= '1' && ch <= '8') {
+        for (var i = 0; i < Number(ch); i++) squares.push('');
+      } else {
+        squares.push(ch);
+      }
     });
+  });
 
-    // Closes responsive menu when a scroll trigger link is clicked
-    $(".js-scroll-trigger").click(function () {
-        $(".navbar-collapse").collapse("hide");
-    });
+  // show the board from Black's side for my Black openings
+  if (board.hasAttribute('data-flip')) squares.reverse();
 
-    // Activate scrollspy to add active class to navbar items on scroll
-    $("body").scrollspy({
-        target: "#mainNav",
-        offset: 74,
-    });
+  squares.forEach(function (ch, i) {
+    var sq = document.createElement('span');
+    var row = Math.floor(i / 8);
+    sq.className = (row + i) % 2 === 0 ? 'sq light' : 'sq dark';
 
-    // Collapse Navbar
-    var navbarCollapse = function () {
-        if ($("#mainNav").offset().top > 100) {
-            $("#mainNav").addClass("navbar-shrink");
-        } else {
-            $("#mainNav").removeClass("navbar-shrink");
-        }
-    };
-    // Collapse now if page is not at top
-    navbarCollapse();
-    // Collapse the navbar when page is scrolled
-    $(window).scroll(navbarCollapse);
-})(jQuery); // End of use strict
+    if (ch) {
+      sq.textContent = glyphs[ch.toLowerCase()];
+      sq.classList.add(ch === ch.toUpperCase() ? 'white' : 'black');
+    }
+    board.appendChild(sq);
+  });
+});
